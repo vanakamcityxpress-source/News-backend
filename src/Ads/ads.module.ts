@@ -1,0 +1,12 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AdsService } from './ads.service';
+import { AdsController } from './ads.controller';
+import { Ad } from 'src/entity/ads';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([Ad])],
+  controllers: [AdsController],
+  providers: [AdsService],
+})
+export class AdsModule {}

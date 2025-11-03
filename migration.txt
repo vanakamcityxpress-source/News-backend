@@ -1,0 +1,4 @@
+>npx ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:create ./src/migrations/AddProductsTable
+Migration J:\test\src\migrations/1760681415262-AddProductsTable.ts has been generated successfully.
+
+J:\test>npm run typeorm -- migration:run   
