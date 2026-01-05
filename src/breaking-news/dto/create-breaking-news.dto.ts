@@ -1,19 +1,23 @@
-// src/breaking-news/dto/create-breaking-news.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsBoolean, IsOptional } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateBreakingNewsDto {
-  @ApiProperty()
-  @IsNotEmpty()
+  @ApiProperty({ example: 'Breaking: Major Event' })
+  @IsString()
   heading: string;
 
-  @ApiProperty()
-  @IsNotEmpty()
+  @ApiProperty({ example: 'Detailed description of the breaking news...' })
+  @IsString()
   description: string;
 
-  @ApiProperty({ type: 'string', format: 'binary', required: false })
+  @ApiProperty({ example: true, required: false })
   @IsOptional()
-  video?: any;
+  @Transform(({ value }) => {
+    if (value === 'true' || value === true || value === 1 || value === '1') return true;
+    if (value === 'false' || value === false || value === 0 || value === '0') return false;
+    return value;
+  })
+  @IsBoolean()
+  isActive?: boolean;
 }
-
-

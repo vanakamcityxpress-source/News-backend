@@ -2,86 +2,101 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Article } from 'src/entity/Article';
-import { CreateArticleDto } from './dto/create-article.dto';
-import { UpdateArticleDto } from './dto/update-article.dto';
 import { slugify } from 'transliteration';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class ArticlesService {
+  private uploadDir = path.join(process.cwd(), 'uploads');
+
   constructor(
     @InjectRepository(Article)
-    private readonly articleRepository: Repository<Article>,
-  ) { }
-
-  // 🟢 CREATE
-  async create(createArticleDto: CreateArticleDto): Promise<Article> {
-    const article = this.articleRepository.create({
-      ...createArticleDto,
-      slug: slugify(createArticleDto.title),
-    });
-    return await this.articleRepository.save(article);
-  }
-
-  // 🔵 READ - ALL
-  async findAll(limit?: number): Promise<Article[]> {
-    const query = this.articleRepository
-      .createQueryBuilder('article')
-      .orderBy('article.createdAt', 'DESC');
-    if (limit) query.limit(limit);
-    return query.getMany();
-  }
-
-  // 🔵 READ - BY ID
-  async findOne(id: number): Promise<Article> {
-    const article = await this.articleRepository.findOne({ where: { id } });
-    if (!article) throw new NotFoundException('Article not found');
-    return article;
-  }
-
-  // 🔵 READ - BY SLUG
-  async findBySlug(slug: string): Promise<Article> {
-    const article = await this.articleRepository.findOne({ where: { slug } });
-    if (!article) throw new NotFoundException('Article not found');
-    return article;
-  }
-
-  // 🟡 UPDATE
-  async update(id: number, updateArticleDto: UpdateArticleDto): Promise<Article> {
-    const existing = await this.articleRepository.findOne({ where: { id } });
-    if (!existing) throw new NotFoundException('Article not found');
-
-    // Create a clean update object (only defined fields)
-    const cleanUpdate: Partial<Article> = {};
-
-    for (const [key, value] of Object.entries(updateArticleDto)) {
-  if (
-    value !== undefined &&
-    value !== null &&
-    value !== '' &&
-    !(Array.isArray(value) && value.every(v => v === ''))
+    private readonly articleRepo: Repository<Article>,
   ) {
-    (cleanUpdate as any)[key] = value;
+    if (!fs.existsSync(this.uploadDir)) {
+      fs.mkdirSync(this.uploadDir, { recursive: true });
+    }
   }
+private imagesDir = path.join(process.cwd(), 'uploads/images');
+private videosDir = path.join(process.cwd(), 'uploads/videos');
+
+private saveFile(file: Express.Multer.File): string {
+  const isVideo = file.mimetype.startsWith('video/');
+  const dir = isVideo ? this.videosDir : this.imagesDir;
+
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+  const fileName = `${Date.now()}-${file.originalname}`;
+  fs.writeFileSync(path.join(dir, fileName), file.buffer);
+
+  return isVideo
+    ? `/uploads/videos/${fileName}`
+    : `/uploads/images/${fileName}`;
 }
 
-    // 🟣 If title changed → regenerate slug
-    if (cleanUpdate.title && cleanUpdate.title !== existing.title) {
-      cleanUpdate.slug = slugify(cleanUpdate.title);
-    }
 
-    // 🟡 Merge changes safely
-    const updated = this.articleRepository.merge(existing, cleanUpdate);
-    await this.articleRepository.save(updated);
-
-    return updated;
+  private normalizeArray(value?: string[] | string): string[] {
+    if (!value) return [];
+    return Array.isArray(value) ? value : [value];
   }
 
+  async create(
+    dto: any,
+    mainFile: Express.Multer.File,
+    imageFiles: Express.Multer.File[] = [],
+  ) {
+    const article = this.articleRepo.create({
+      ...dto,
+      tags: this.normalizeArray(dto.tags),
+      contentParagraphs: this.normalizeArray(dto.contentParagraphs),
+      mainImage: this.saveFile(mainFile),
+      images: imageFiles.map(f => this.saveFile(f)),
+      slug: slugify(dto.title, { lowercase: true }),
+    });
 
-  // 🔴 DELETE
-  async remove(id: number): Promise<void> {
-    const result = await this.articleRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException('Article not found');
+    return this.articleRepo.save(article);
+  }
+
+  async update(
+    id: number,
+    dto: any,
+    mainFile?: Express.Multer.File,
+    imageFiles: Express.Multer.File[] = [],
+  ) {
+    const article = await this.articleRepo.findOne({ where: { id } });
+    if (!article) throw new NotFoundException('Article not found');
+
+    if (mainFile) article.mainImage = this.saveFile(mainFile);
+
+    if (imageFiles.length) {
+      article.images = [
+        ...(article.images || []),
+        ...imageFiles.map(f => this.saveFile(f)),
+      ];
     }
+
+    Object.assign(article, {
+      ...dto,
+      tags: this.normalizeArray(dto.tags),
+      contentParagraphs: this.normalizeArray(dto.contentParagraphs),
+    });
+
+    return this.articleRepo.save(article);
+  }
+
+  findAll() {
+    return this.articleRepo.find({ order: { createdAt: 'DESC' } });
+  }
+
+  async findOne(id: number) {
+    const article = await this.articleRepo.findOne({ where: { id } });
+    if (!article) throw new NotFoundException('Article not found');
+    return article;
+  }
+
+  async remove(id: number) {
+    const article = await this.findOne(id);
+    await this.articleRepo.remove(article);
   }
 }

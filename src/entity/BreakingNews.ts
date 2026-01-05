@@ -15,8 +15,8 @@ export class BreakingNews {
 
   @Column({ nullable: true })
   @ApiProperty({
-    example: 'https://xyz.supabase.co/storage/v1/object/public/breaking-news/videos/video123.mp4',
-    description: 'Public Supabase video URL',
+    example: 'uploads/videos/breaking-news-123.mp4',
+    description: 'Path to the video file',
     required: false,
   })
   video?: string;
@@ -28,6 +28,13 @@ export class BreakingNews {
   @Column('text')
   @ApiProperty({ example: 'Detailed description of the breaking news...' })
   description: string;
+
+  @Column({ 
+    name: 'isActive', // Match your database column name
+    default: false 
+  })
+  @ApiProperty({ example: false, description: 'Whether the news is active' })
+  isActive: boolean;
 
   @CreateDateColumn({ name: 'created_at' })
   @ApiProperty()

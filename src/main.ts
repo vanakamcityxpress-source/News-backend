@@ -44,12 +44,18 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // ✅ Enable CORS for frontend
-  app.enableCors({
-    origin: 'http://localhost:5173', // React frontend URL
-    methods: ['GET', 'POST', 'OPTIONS', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-  });
+app.enableCors({
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'https://vanakamcityxpress.com',
+    'https://admin.vanakamcityxpress.com',
+    'https://vsm3p0rm-5174.inc1.devtunnels.ms'
+  ],
+  methods: ['GET', 'POST', 'OPTIONS', 'PATCH', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+});
 
   // ✅ Serve static assets (uploads folder)
 const imagesPath = join(process.cwd(), 'uploads/images');
@@ -57,7 +63,19 @@ const videosPath = join(process.cwd(), 'uploads/videos');
 
 if (!existsSync(imagesPath)) mkdirSync(imagesPath, { recursive: true });
 if (!existsSync(videosPath)) mkdirSync(videosPath, { recursive: true });
+// In bootstrap() function, add:
+const breakingNewsPath = join(process.cwd(), 'uploads/breaking-news');
+if (!existsSync(breakingNewsPath)) mkdirSync(breakingNewsPath, { recursive: true });
 
+// Serve breaking news videos
+app.useStaticAssets(breakingNewsPath, {
+  prefix: '/uploads/breaking-news',
+  setHeaders: (res, path) => {
+    if (path.endsWith('.mp4') || path.endsWith('.mov') || path.endsWith('.avi')) {
+      res.setHeader('Content-Type', 'video/mp4');
+    }
+  },
+});
 // Serve images
 app.useStaticAssets(imagesPath, {
   prefix: '/uploads/images', // accessible via /uploads/images/...

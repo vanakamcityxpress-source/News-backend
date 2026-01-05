@@ -1,4 +1,3 @@
-// src/breaking-news/breaking-news.module.ts
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BreakingNews } from '../entity/BreakingNews';
@@ -7,7 +6,8 @@ import { BreakingNewsController } from './breaking-news.controller';
 
 @Module({
   imports: [TypeOrmModule.forFeature([BreakingNews])],
-  providers: [BreakingNewsService],
   controllers: [BreakingNewsController],
+  providers: [BreakingNewsService],
+  exports: [BreakingNewsService],
 })
 export class BreakingNewsModule {}

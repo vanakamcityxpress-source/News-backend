@@ -7,12 +7,13 @@ import {
   OneToMany,
 } from 'typeorm';
 import { Comment } from './comment';
+
 @Entity('articles')
 export class Article {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ nullable: false })
+  @Column()
   title: string;
 
   @Column({ nullable: true })
@@ -45,8 +46,9 @@ export class Article {
   @Column({ unique: true })
   slug: string;
 
-  @OneToMany(() => Comment, (comment) => comment.article, { cascade: true })
+  @OneToMany(() => Comment, comment => comment.article, { cascade: true })
   comments: Comment[];
+
   @CreateDateColumn()
   createdAt: Date;
 
