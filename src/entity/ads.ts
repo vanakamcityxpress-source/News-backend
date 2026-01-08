@@ -20,11 +20,21 @@ export class Ad {
   @Column({ nullable: true })
   image?: string;
 
-  @Column({ type: 'timestamptz', nullable: true })
-  startTime?: Date;
+    // CHANGE THIS:
+  // @Column({ type: 'timestamptz' })  ← ❌ PostgreSQL type
 
-  @Column({ type: 'timestamptz', nullable: true })
-  endTime?: Date;
+  @Column({ type: 'timestamp', nullable: true })
+  startTime?: Date;   // <-- optional
+
+  @Column({ type: 'timestamp', nullable: true })
+  endTime?: Date;     // <-- optional
+
+  
+  // @Column({ type: 'timestamptz', nullable: true })
+  // startTime?: Date;
+
+  // @Column({ type: 'timestamptz', nullable: true })
+  // endTime?: Date;
 
   @Column({ default: true })
   isActive: boolean;  

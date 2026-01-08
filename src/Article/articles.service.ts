@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Article } from 'src/entity/Article';
+import { Article } from '../entity/Article';
 import { slugify } from 'transliteration';
 import * as fs from 'fs';
 import * as path from 'path';

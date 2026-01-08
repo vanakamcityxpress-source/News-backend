@@ -116,8 +116,9 @@ app.useGlobalPipes(
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api', app, swaggerDocument);
 
-  const port = 3000;
-  await app.listen(port);
+const port = process.env.PORT || 3000;
+await app.listen(port, '0.0.0.0');
+
 
   console.log(`🚀 Server running at: http://localhost:${port}`);
   console.log(`📘 Swagger docs:     http://localhost:${port}/api`);
